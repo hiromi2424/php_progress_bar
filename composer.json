@@ -1,0 +1,26 @@
+{
+    "name": "hiromi2424/php_progress_bar",
+    "description": "PHP ProgressBar - PHP console utility for monitoring progress of long process",
+    "keywords": ["PHP", "Console", "cli", "Progress"],
+    "homepage": "http://github.com/hiromi2424/php_progress_bar",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "hiromi2424",
+            "homepage": "http://github.com/hiromi2424"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "recommend": {
+        "ext-pthreads": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "ProgressBar\\": "src/",
+            "ProgressBar\\Test\\": "tests/"
+        }
+    }
+}
