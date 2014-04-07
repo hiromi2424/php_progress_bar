@@ -13,6 +13,7 @@ class ProgressBar {
 	public $Message;
 	public $messageClass = 'ProgressBar\Message';
 	public $threadClass = 'ProgressBar\Thread';
+	public $results = [];
 
 	protected $_previousLineLength = 0;
 	protected $_position;
@@ -37,6 +38,9 @@ class ProgressBar {
 			'skip' => null,
 			'autoSkip' => 10000,
 			'defaultSkip' => 10,
+			'collectResults' => false,
+			'breakOnFalse' => true,
+			'breakOnNull' => false,
 		];
 	}
 
@@ -57,12 +61,16 @@ class ProgressBar {
 		$self->$procedure();
 		$self->finish();
 
+		if ($self->options['collectResults']) {
+			return $self->results;
+		}
 		return $self;
 	}
 
 	public function init() {
 		$this->_dataCount = count($this->data);
 		$this->_position = 0;
+		$this->results = [];
 		$this->Message = new $this->messageClass($this->_dataCount);
 
 		if ($this->options['started']) {
@@ -85,7 +93,9 @@ class ProgressBar {
 
 		$thread->start();
 		foreach ($this->data as $key => $value) {
-			$this->_forward($key, $value);
+			if (!$this->_forward($key, $value)) {
+				break;
+			}
 			$thread->setPosition($this->_position);
 
 			if (!$this->_shouldSkip()) {
@@ -93,21 +103,43 @@ class ProgressBar {
 			}
 		}
 		$thread->stop();
+
+		if ($this->options['collectResults']) {
+			return $this->results;
+		}
 	}
 
 	public function serial() {
 		foreach ($this->data as $key => $value) {
-			$this->_forward($key, $value);
+			if (!$this->_forward($key, $value)) {
+				break;
+			}
 			if (!$this->_shouldSkip()) {
 				$this->Message->show($this->_position);
 			}
+		}
+
+		if ($this->options['collectResults']) {
+			return $this->results;
 		}
 	}
 
 	protected function _forward($key, $value) {
 		$result = call_user_func($this->callback, $key, $value);
+		if ($this->options['collectResults']) {
+			$this->results[] = $result;
+		}
+
+		if ($this->options['breakOnFalse'] && $result === false) {
+			return false;
+		}
+
+		if ($this->options['breakOnNull'] && $result === null) {
+			return false;
+		}
 
 		$this->_position++;
+		return true;
 	}
 
 	protected function _shouldSkip() {
